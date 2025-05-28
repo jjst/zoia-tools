@@ -22,7 +22,7 @@ def count_tokens(path: Path, encoding: str = "o200k_base") -> None:
     print(f"   • size on disk : {file_size_mb:.2f} MB")
     print(
         f"   • tokens       : {n_tokens:,} / 2,000,000  "
-        f"({n_tokens / 20_000:.1%} of limit)"
+        f"({n_tokens / 2_000_000:.1%} of limit)"
     )
 
 
