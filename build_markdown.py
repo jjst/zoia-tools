@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import re
 from pathlib import Path
 import pandas as pd
 import tiktoken
@@ -193,19 +194,37 @@ def build_categories(modules):
     # 3. Your final list:
     categories = list(cats.values())
     return categories
-    
+
+def slugify(text: str) -> str:
+    # lower, strip non-word, spaces→hyphens
+    text = text.lower()
+    text = re.sub(r"[^\w\s-]", "", text)
+    text = re.sub(r"\s+", "-", text.strip())
+    return text
+
+def generate_toc(categories: List[Category]) -> List[str]:
+    toc_lines: List[str] = []
+    toc_lines.append("## Table of Contents\n")
+    for cat in categories:
+        cat_slug = slugify(cat.name)
+        toc_lines.append(f"- [{cat.name}](#{cat_slug})")
+        for mod in cat.modules:
+            mod_slug = slugify(mod.name)
+            toc_lines.append(f"  - [{mod.name}](#{mod_slug})")
+        toc_lines.append("")  # blank line between categories
+    return toc_lines
 
 def render_markdown(categories: List[Category]) -> str:
     lines: List[str] = []
+    # 1. Title
     lines.append("# ZOIA Module Index\n")
-
+    # 2. TOC
+    lines.extend(generate_toc(categories))
+    # 3. Full content
     for cat in categories:
-        # Category heading + description
         lines.append(f"## {cat.name}")
         lines.append(f"{cat.description}\n")
-
         for mod in cat.modules:
-            # Module subheading
             lines.append(f"### {mod.name}")
             lines.append(f"{mod.description}")
             lines.append(f"- **Max Blocks:** `{mod.max_blocks}`")
@@ -227,11 +246,9 @@ def render_markdown(categories: List[Category]) -> str:
                     if p.options:
                         lines.append(f"    - **Option:** `{p.options}`")
             lines.append("")  # blank line after each module
-
         lines.append("---\n")  # separator between categories
 
     return "\n".join(lines)
-
 
 def write_output(md_text: str, out_path: Path) -> None:
     out_path.write_text(md_text, encoding="utf-8")
